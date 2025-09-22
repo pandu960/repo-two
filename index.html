@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>30-Day Healthy Diet & Home Remedies</title>
+  <style>
+    :root{--accent:#2b8a7d;--muted:#6b7280;--bg:#f7faf9;--card:#ffffff;--radius:12px}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;margin:0;background:var(--bg);color:#0f172a}
+    header{background:linear-gradient(90deg,#e6fffb, #eefbf7);padding:24px 18px;border-bottom:1px solid #e6eef0}
+    .container{max-width:1100px;margin:20px auto;padding:0 18px}
+    h1{margin:0;font-size:1.4rem;color:var(--accent)}
+    p.lead{margin:6px 0 0;color:var(--muted)}
+
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:20px;margin-top:18px}
+    .card{background:var(--card);padding:16px;border-radius:var(--radius);box-shadow:0 6px 18px rgba(15,23,42,0.06)}
+
+    /* Diet table */
+    table{width:100%;border-collapse:collapse;font-size:0.95rem}
+    th,td{padding:10px 8px;text-align:left;border-bottom:1px solid #eef2f4}
+    th{background:#fbfffef0;color:#0b3940;position:sticky;top:0}
+
+    /* Controls */
+    .controls{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+    .controls input[type=search], .controls select{flex:1;padding:8px;border-radius:8px;border:1px solid #e3e7ea}
+    .controls button{background:var(--accent);color:white;padding:8px 12px;border-radius:8px;border:0}
+
+    /* Remedies list */
+    .remedy-item{padding:10px;border-radius:10px;border:1px dashed #e6efee;margin-bottom:10px}
+    .remedy-item h4{margin:0 0 6px}
+    .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+    .tag{background:#f0fdf9;padding:4px 8px;border-radius:999px;font-size:0.8rem;color:#066a58}
+
+    /* Modal */
+    .modal{position:fixed;inset:0;background:rgba(2,6,23,0.5);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:all .18s}
+    .modal.open{opacity:1;pointer-events:auto}
+    .modal .inner{background:var(--card);padding:18px;border-radius:12px;max-width:720px;width:95%;box-shadow:0 12px 30px rgba(2,6,23,.2)}
+
+    /* Responsive */
+    @media (max-width:980px){.grid{grid-template-columns:1fr}.container{padding:12px}.controls{flex-direction:column}.controls input[type=search]{width:100%}}
+
+    footer{padding:22px 18px;text-align:center;color:var(--muted);font-size:.9rem}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>30-Day Healthy Diet & Home Remedies</h1>
+      <p class="lead">Simple, balanced meal rotations and practical home remedies for common small problems. Use this as a starting point and adapt for allergies or dietary preferences.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="grid">
+      <section class="card" id="mainCard">
+        <div class="controls">
+          <input id="searchDay" type="search" placeholder="Search day number or food (eg: 'day 12' or 'salad')">
+          <select id="filterType">
+            <option value="all">All</option>
+            <option value="vegetarian">Vegetarian</option>
+            <option value="nonveg">Non-veg</option>
+            <option value="light">Light / Low-calorie</option>
+          </select>
+          <button id="printBtn">Print</button>
+        </div>
+
+        <div style="overflow:auto;max-height:64vh;border-radius:8px">
+          <table id="dietTable" aria-label="30 day diet plan">
+            <thead>
+              <tr><th style="width:72px">Day</th><th>Breakfast</th><th>Lunch</th><th>Dinner</th><th>Snacks / Notes</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="card">
+        <h3 style="margin-top:0">Home Remedies</h3>
+        <p class="lead" style="margin-bottom:12px">Quick, safe home remedies for small, common problems. Not a substitute for professional medical advice.</p>
+        <input id="remedySearch" placeholder="Search remedy (eg: cough, acne)" style="width:100%;padding:8px;border-radius:8px;border:1px solid #e3e7ea;margin-bottom:12px">
+        <div id="remedyList" style="max-height:56vh;overflow:auto"></div>
+      </aside>
+    </div>
+  </main>
+
+  <div class="modal" id="modal">
+    <div class="inner">
+      <button id="closeModal" style="float:right;border:0;background:transparent;font-size:1rem">Close</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <footer>
+    Built for personal use. Adapt meals for your needs. If you have medical conditions consult a professional.
+  </footer>
+
+  <script>
+    // --- Data: 30-day meal rotation (sample, flexible) ---
+    const mealTemplates = {
+      vegetarian: [
+        {b:'Oats porridge with banana & nuts', l:'Quinoa salad with chickpeas & veggies', d:'Lentil stew with mixed veg + brown rice', s:'Greek yogurt + berries'},
+        {b:'Vegetable omelette (or tofu scramble) + whole grain toast', l:'Brown rice with dal and mixed veg', d:'Grilled paneer, salad and roti', s:'Handful of nuts'},
+        {b:'Smoothie (spinach, fruit, yogurt) + oats bar', l:'Chickpea curry with brown rice', d:'Veg stir-fry with soba or quinoa', s:'Fruit + a few seeds'},
+        {b:'Poha or upma with veggies', l:'Mixed bean salad & whole wheat bread', d:'Stuffed capsicum + salad', s:'Roasted chana'},
+        {b:'Dosa with sambar & chutney', l:'Palak paneer + millet rotis', d:'Mixed vegetable soup + salad', s:'Cottage cheese cubes'}
+      ],
+      nonveg: [
+        {b:'Scrambled eggs + whole grain toast', l:'Grilled chicken salad with quinoa', d:'Baked fish with steamed veg', s:'Fruit + yogurt'},
+        {b:'Greek yogurt bowl + fruit + seeds', l:'Turkey or chicken wrap + salad', d:'Shrimp stir-fry with brown rice', s:'Nuts'},
+        {b:'Omelette with spinach + fruit', l:'Lentil soup with shredded chicken', d:'Grilled chicken with roasted veg', s:'Roasted pumpkin seeds'},
+        {b:'Idli with chutney & egg on side', l:'Tuna salad + multigrain crackers', d:'Mild chicken curry + millet', s:'Carrot sticks + hummus'},
+        {b:'Smoothie with protein powder + oats', l:'Fish tacos (light) + slaw', d:'Stir-fried tofu & prawns (mix) + rice', s:'Fresh fruit'}
+      ],
+      light: [
+        {b:'Green smoothie + seed mix', l:'Mixed green salad with beans', d:'Clear vegetable soup with lean protein', s:'Cucumber & carrot sticks'},
+        {b:'Fruit salad + low-fat yogurt', l:'Grilled fish + steamed broccoli', d:'Zucchini noodles with tomato basil', s:'A small apple'},
+        {b:'Chia pudding with berries', l:'Lentil & spinach soup', d:'Baked chicken + salad', s:'A few almonds'},
+      ]
+    };
+
+    // Generate 30-day plan by rotating templates
+    function build30DayPlan(){
+      const plan = [];
+      for(let day=1; day<=30; day++){
+        const type = (day%5===0)?'light':(day%2===0?'vegetarian':'nonveg');
+        const templates = mealTemplates[type];
+        const tpl = templates[(day-1)%templates.length];
+        plan.push({day,type,breakfast:tpl.b,lunch:tpl.l,dinner:tpl.d,snack:tpl.s});
+      }
+      return plan;
+    }
+
+    const plan = build30DayPlan();
+
+    // Render table
+    const tbody = document.querySelector('#dietTable tbody');
+    function renderTable(list){
+      tbody.innerHTML='';
+      list.forEach(item=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>Day ${item.day}</td><td>${item.breakfast}</td><td>${item.lunch}</td><td>${item.dinner}</td><td>${item.snack} <div style="font-size:0.8rem;color:var(--muted);margin-top:6px">Type: ${item.type}</div></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    renderTable(plan);
+
+    // Search & filter logic
+    document.getElementById('searchDay').addEventListener('input', e=>{
+      const q=e.target.value.trim().toLowerCase();
+      applyFilters(q, document.getElementById('filterType').value);
+    });
+    document.getElementById('filterType').addEventListener('change', e=>{
+      applyFilters(document.getElementById('searchDay').value.trim().toLowerCase(), e.target.value);
+    });
+
+    function applyFilters(query, filter){
+      let results = plan.filter(item=>{
+        if(filter!=='all' && item.type!==filter) return false;
+        if(!query) return true;
+        if(query.startsWith('day ')) return (`day ${item.day}`).includes(query);
+        return [item.breakfast,item.lunch,item.dinner,item.snack].join(' ').toLowerCase().includes(query);
+      });
+      renderTable(results);
+    }
+
+    // Print button
+    document.getElementById('printBtn').addEventListener('click', ()=>window.print());
+
+    // --- Remedies data ---
+    const remedies = [
+      {id:'cold',title:'Common Cold',tags:['respiratory','cough'],short:'Warm fluids and rest',details:`Symptoms: runny nose, sore throat, mild cough.\nHome care:\n• Steam inhalation with eucalyptus 2–3x/day.\n• Warm honey-lemon drink (for adults and children over 1 year).\n• Rest, hydration, saline nasal drops.`},
+      {id:'sore-throat',title:'Sore Throat',tags:['throat','pain'],short:'Gargle salt water',details:`Gargle warm salt water (1/2 tsp salt in 250 ml) every 3–4 hours. Honey-thyme tea soothes. Use lozenges for adults.`},
+      {id:'headache',title:'Tension Headache',tags:['head','pain'],short:'Hydrate, apply cool cloth',details:`Hydration and rest. Apply a cool cloth or gentle pressure to forehead/neck. Try light stretching or a short walk. Avoid screens.`},
+      {id:'indigestion',title:'Indigestion / Bloating',tags:['digestion','stomach'],short:'Ginger or fennel tea',details:`Small sips of ginger or fennel tea. Avoid heavy fatty meals. Walk 10–15 minutes after eating. Over-the-counter antacids if needed.`},
+      {id:'minor-cut',title:'Minor Cuts & Scrapes',tags:['wound','first-aid'],short:'Clean and cover',details:`Clean with running water, apply antiseptic if available, cover with sterile dressing. Change dressing daily. Seek care if deep or doesn't stop bleeding.`},
+      {id:'acne',title:'Acne / Pimples',tags:['skin','acne'],short:'Spot clean & avoid squeezing',details:`Clean skin twice daily with gentle cleanser. Spot-apply tea tree oil or diluted apple-cider-vinegar (patch test first). Avoid picking.`},
+      {id:'insect-bite',title:'Insect Bites',tags:['skin','bite'],short:'Cold compress + calamine',details:`Cold compress to reduce swelling. Apply calamine lotion or a paste of baking soda + water for itch. Antihistamine for big reactions.`},
+      {id:'constipation',title:'Constipation',tags:['digestion'],short:'Fiber, water, movement',details:`Increase fiber (fruits, vegetables, whole grains), hydrate, and move. Prunes or warm prune juice can help. Use laxatives occasionally if needed.`},
+      {id:'heartburn',title:'Heartburn',tags:['digestion','acid'],short:'Avoid trigger foods, small meals',details:`Avoid spicy/fatty foods, don't lie down immediately after eating, raise head while sleeping. Antacids for short term relief.`},
+      {id:'sore-muscle',title:'Sore Muscles',tags:['muscle','pain'],short:'Rest, gentle stretch, warm bath',details:`Light stretching, warm shower or bath, and gentle massage. Over-the-counter pain relief if necessary.`}
+    ];
+
+    const remedyList = document.getElementById('remedyList');
+    function renderRemedies(list){
+      remedyList.innerHTML='';
+      list.forEach(r=>{
+        const div=document.createElement('div');
+        div.className='remedy-item';
+        div.innerHTML=`<h4>${r.title}</h4><div style="color:var(--muted);font-size:0.95rem">${r.short}</div><div class='tags'>${r.tags.map(t=>`<span class='tag'>${t}</span>`).join('')}</div><div style='margin-top:8px'><button data-id='${r.id}' class='openRemedy' style='padding:8px;border-radius:8px;border:0;background:var(--accent);color:#fff'>Read</button></div>`;
+        remedyList.appendChild(div);
+      });
+
+      // attach handlers
+      document.querySelectorAll('.openRemedy').forEach(btn=>btn.addEventListener('click', e=>{
+        const id=e.currentTarget.dataset.id;
+        const item=remedies.find(x=>x.id===id);
+        showModal(`<h2>${item.title}</h2><pre style='white-space:pre-wrap;font-family:inherit'>${item.details}</pre>`);
+      }));
+    }
+
+    renderRemedies(remedies);
+
+    document.getElementById('remedySearch').addEventListener('input',e=>{
+      const q=e.target.value.trim().toLowerCase();
+      const out = remedies.filter(r=>r.title.toLowerCase().includes(q)||r.tags.join(' ').includes(q)||r.short.toLowerCase().includes(q));
+      renderRemedies(out);
+    });
+
+    // Modal
+    const modal = document.getElementById('modal');
+    function showModal(html){
+      document.getElementById('modalContent').innerHTML=html;
+      modal.classList.add('open');
+    }
+    document.getElementById('closeModal').addEventListener('click', ()=>modal.classList.remove('open'));
+    modal.addEventListener('click', e=>{ if(e.target===modal) modal.classList.remove('open') });
+
+    // Accessibility: keyboard close
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape') modal.classList.remove('open') });
+  </script>
+</body>
+</html>
